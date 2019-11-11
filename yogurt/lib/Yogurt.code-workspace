@@ -1,0 +1,15 @@
+{
+	"folders": [
+		{
+			"path": "C:\\Users\\Emera\\Visual Studio Projects\\Yogurt"
+		}
+	],
+	"settings": {
+		"workbench.colorCustomizations": {
+			"activityBar.background": "#531635",
+			"titleBar.activeBackground": "#751E4A",
+			"titleBar.activeForeground": "#FEFCFD"
+		},
+		"java.configuration.updateBuildConfiguration": "automatic"
+	}
+}

@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "437015862802",
+    "firebase_url": "https://yogurt-ff1d1.firebaseio.com",
+    "project_id": "yogurt-ff1d1",
+    "storage_bucket": "yogurt-ff1d1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:437015862802:android:a848c17ff6c7d09f",
+        "android_client_info": {
+          "package_name": "com.example.yogurt"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "437015862802-r083saqu4uu9ek08srf34rakrqg3291s.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAw_jPhHtBf55CLb_gas3bXwq17Se4lCW0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "437015862802-r083saqu4uu9ek08srf34rakrqg3291s.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
