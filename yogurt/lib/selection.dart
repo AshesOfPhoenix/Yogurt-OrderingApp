@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:yogurt/FireStore.dart';
 import 'package:yogurt/images.dart';
-
 import 'package:yogurt/settings.dart';
 import 'package:yogurt/past_orders.dart';
 import 'Colors.dart';
@@ -34,14 +34,32 @@ class _OrderListState extends State<OrderList> {
   ScrollController sc = ScrollController(initialScrollOffset: 70);
 
   //Map<String, Map<String, dynamic>> mapa = <String, Map<String, dynamic>>{};
-  Map<String, dynamic> izdelki = <String, dynamic>{}; //Mapa za izdelke
-  //var tempDir;
+  Map<String, dynamic> availableItems = <String, dynamic>{}; //!Mapa za izdelki ki so na voljo
+   Map selectedItems = new Map(); //!Mapa z izbranimi izdelki
+  //Map<String, String> slikeCached = <String, String>{};
 
   //var list_name = new List();
   //var currentPageValue = 0.0;
   //double _viewportScale = 1;
-  var order_list;
+  Directory dir = Directory.systemTemp; //!Temporary system directory where the images are stored -> CACHED
+  var myDir; //!Variable that holds the path to temporary directory
 
+
+  String userID; //!FirebaseUser id <- currently loged user
+
+  final Firestore yogurts = Firestore.instance; 
+  final Firestore users = Firestore.instance;
+  Stream items; //!Stream for items
+  Stream userData; //!Stream for userData
+
+  List users_selectedItems;
+  int cnt = 0;
+  int current_page = 0;
+
+  
+  List<FileSystemEntity> _images;
+
+  //!Hardcoded file paths
   var slike = ["assets/breskev.jpg", "assets/jagoda.jpg", "assets/vanilla_coko.jpg"];
   var slikeMap = {
     'Breskev': 'assets/breskev.jpg',
@@ -53,38 +71,29 @@ class _OrderListState extends State<OrderList> {
     "Jagoda": "assets/jagoda.png",
     "Vanilija Coko": "assets/choco_vanilla.png"
   };
-
-  final Firestore db = Firestore.instance;
-  final Firestore dbb = Firestore.instance;
-
-  var userID; //!Uporabnik
-  Stream items; //!Stream for items
-  Stream userData; //!Stream for userData
-  List users_order_list;
-  int cnt = 0;
-  int current_page = 0;
-  var dir = Directory.systemTemp;
-  List<FileSystemEntity> _images;
-
-  
+  var slikeCached = {
+    'Breskev': '/data/user/0/com.example.yogurt/code_cache/marelica.jpg',
+    'Jagoda': '/data/user/0/com.example.yogurt/code_cache/jagoda.jpg',
+    'Vanilija Coko': '/data/user/0/com.example.yogurt/code_cache/vanilija_coko.jpg'
+  };
   
 
   @override
   void initState(){
     super.initState();
 
-    final myDir = new Directory(dir.path);
-    
+    myDir = new Directory(dir.path);
+    userID = user.uid;
+
     //_images = myDir.listSync(recursive: true, followLinks: false);
     print(myDir);
     print(_images);
 
-    userID = user.uid; //!FirebaseUser
 
-    order_list = new Map(); //?Init Map
-
-    queryItems(); //!Call query function for getting items
-    queryUserData(); //!Call query function for getting user data
+    //items = FetchFromFirestore().queryItems() as Stream;
+    //userData = FetchFromFirestore().queryUserData(userID) as Stream;
+    queryItems(); //!Stream for items currently availble
+    queryUserData(); //!Stream for userData of the loged user
 
     itemView.addListener(() {
       int next = itemView.page.round();
@@ -105,7 +114,7 @@ class _OrderListState extends State<OrderList> {
         //!If dacuments not empty
         for (var i = 0; i < docs.documents.length; i++) {
           var itemData = docs.documents[i].data;
-          izdelki[itemData['ime']] =
+          availableItems[itemData['ime']] =
               itemData; //!Napolni Map z izdelki ..... jagoda.jpg :  item_data
         }
       }
@@ -115,33 +124,25 @@ class _OrderListState extends State<OrderList> {
   }
   */
 
- 
-  
-
-  void showInSnackBar(String value) {
-    //!Pokaži sporočilo po opravljenem sporočilu
-    _scaffoldKey.currentState.showSnackBar(new SnackBar(content: new Text(value)));
-  }
-
-  Future<Stream> queryItems() async {
+  void queryItems() async {
     //!Fetch items
     try {
-      Query query = db.collection('current_items').where("available", isEqualTo: true);
+      Query query = yogurts.collection('current_items').where("available", isEqualTo: true);
       //!Filter available izdelke
-      items = query.snapshots().map((list) {
-        return list.documents.map((doc) {
-          return doc.data;
+      //*QuerySnapshot contains zero or more QueryDocumentSnapshot objects representing the results of a query
+      items = query.snapshots().map((list) { //!Convert stream to map on the fly ->
+        return list.documents.map((doc) { //*For every document
+          return doc.data; //*Data from every document
         });
       });
     } catch (e) {
       print("Got error: ${e.error}");
     }
   }
-
-  Future<Stream> queryUserData() async {
+  void queryUserData() async {
     //!Fetch userData
     try {
-      Query query2 = dbb.collection('users'); //!Users
+      Query query2 = users.collection('users').where("uid", isEqualTo: userID); //!Users
       userData = query2.snapshots().map((list) {
         return list.documents.map((doc) {
           return doc.data;
@@ -160,6 +161,7 @@ class _OrderListState extends State<OrderList> {
     super.dispose();
   }
 
+  //!ZOOMER
   @override
   Widget build(BuildContext context) {
     final zoomItem = Hero(
@@ -173,13 +175,15 @@ class _OrderListState extends State<OrderList> {
       ),
     );
 
+
+    //!Page Controller za prehajanje med SelectionScreen in Cart
     this.controller = PageController(
-      //!Page Controller za prehajanje med SelectionScreen in Cart
       initialPage: 0,
       viewportFraction: 1,
     );
+
+     //!Metoda za animiran transition med Selection in Cart screen-om
     bool onWillPop() {
-      //!Metoda za animiran transition med Selection in Cart screen-om
       controller.previousPage(
         duration: Duration(milliseconds: 300),
         curve: Curves.linear,
@@ -234,8 +238,7 @@ class _OrderListState extends State<OrderList> {
                         //*Oglati robovi
                         bottomLeft: const Radius.circular(55.0),
                         bottomRight: const Radius.circular(55.0))),
-                height: MediaQuery.of(context).size.height *
-                    0.90, //!Višina containerja je 90% višine ekrana
+                height: MediaQuery.of(context).size.height * 0.90, //!Višina containerja je 90% višine ekrana
                 child: Padding(
                   padding: EdgeInsets.only(top: 30),
                   child: Column(
@@ -258,43 +261,36 @@ class _OrderListState extends State<OrderList> {
                       //!Stream builder za grajenje seznama izdelkov iz baze
                       StreamBuilder(
                         //!Posluša in rebuilda seznam for every new event
-                        stream: items,
-                        //!Vzame zgoraj filtriran seznam izdelkov kot Stream
+                        stream: items, //?single-subscription stream from the future
                         initialData: [],
-                        builder: (context, AsyncSnapshot snap) {
-                          List slideList =
-                              snap.data.toList(); //! Convert AsynSnapshot into List
+                        builder: (context, AsyncSnapshot snap) { //*Rebuilds its childer whenever a new value gets emited by the stream
+                           List slideList = snap.data.toList(); //! Convert AsynSnapshot into List
                           print("Število elementov:" + slideList.length.toString());
                           if (snap.connectionState == ConnectionState.waiting) {
                             return Center(
-                              child: Text(
-                                "Loading",
-                                style: TextStyle(fontSize: 30),
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                               ),
                             );
                           } else {
                             return Container(
                               //!Vrni container ki vsebuje PageView
-                              height: MediaQuery.of(context).size.height /
-                                  1.5, //!Velikost polovice ekrana
+                              height: MediaQuery.of(context).size.height /1.5, //!Velikost polovice ekrana
                               child: PageView.builder(
                                 onPageChanged: (num) {
-                                  var fIndex = num + 1;
-                                  print("Trenutni index izdelka: " + fIndex.toString());
+                                  print("Trenutni index izdelka: " + num.toString());
                                 },
                                 controller: itemView, //!Pass PageView controller
                                 scrollDirection: Axis.horizontal,
-                                itemCount: slideList
-                                    .length, //!Število elementov je dolžina lista
+                                itemCount: slideList.length, //!Število elementov je dolžina lista
                                 itemBuilder: (context, int currentIndex) {
                                   //!Build current facing item
-                                  bool active = currentIndex == current_page;
+                                  bool active = (currentIndex == current_page);
                                   //print(active.toString());
                                   //print("Trenutni index: " + currentIndex.toString() + " Trenutna stran: " + current_page.toString());
+                                  //?(Lastnosti izdelka kot Map, bool trenutno aktiven, trenutni facing element)
                                   return buildProductListPage(
                                       slideList[currentIndex], active, currentIndex);
-
-                                  //?(Lastnosti izdelka kot Map, bool trenutno aktiven, trenutni facing element)
                                 },
                               ),
                             );
@@ -359,120 +355,115 @@ class _OrderListState extends State<OrderList> {
     final double blur = active ? 5 : 0;
     final double offset = active ? 2 : 0;
     final double top = active ? 30 : 200;
-    final double icon_size = active ? 50 : 0;
+    final double iconSize = active ? 50 : 0;
     final String ime = data['file_name'];
     final String path = "${dir.path}/$ime";
-    return InkWell(
-      onTap: () {
-        print("This does nothing, absolutly nothing!!");
-      },
-      child: AnimatedContainer(
-        height: 600,
-        width: 400,
-        duration: Duration(milliseconds: 1200),
-        curve: Curves.easeOutQuint,
-        margin: EdgeInsets.only(top: top, bottom: 10, right: 15, left: 15),
-        decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20.0),
-            image: DecorationImage(
-                fit: BoxFit.cover,
-                image: AssetImage("$path")),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.7),
-                offset: new Offset(offset / 2, offset),
-                blurRadius: blur,
-              )
-            ]),
-        child: Stack(
-          children: <Widget>[
-            Column(
-              children: <Widget>[
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 15.0),
-                    child: Text(
-                      data['ime'],
-                      style: TextStyle(
-                          fontFamily: 'MadeEvolveSans', fontSize: 50, color: WHITE),
-                    ),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.topCenter,
+    return AnimatedContainer(
+      height: 600,
+      width: 400,
+      duration: Duration(milliseconds: 1200),
+      curve: Curves.easeOutQuint,
+      margin: EdgeInsets.only(top: top, bottom: 10, right: 15, left: 15),
+      decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20.0),
+          image: DecorationImage(
+              fit: BoxFit.cover,
+              image: NetworkImage(data['slika'])),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.7),
+              offset: new Offset(offset / 2, offset),
+              blurRadius: blur,
+            )
+          ]),
+      child: Stack(
+        children: <Widget>[
+          Column(
+            children: <Widget>[
+              Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 15.0),
                   child: Text(
-                    data['volume'].toString() + "ml",
+                    data['ime'],
                     style: TextStyle(
-                        fontFamily: 'MadeEvolveSans', fontSize: 25, color: WHITE),
-                  ),
-                ),
-              ],
-            ),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 15.0, right: 17.0),
-                child: IconButton(
-                  
-                  onPressed: () {
-                    
-                    setState(() {
-                      if (order_list.containsKey(data['ime'])) {
-                        order_list.update(data['ime'], (dynamic val) => ++val);
-                      } else {
-                        order_list[data['ime']] = 1;
-                      }
-                      print(order_list);
-                    });
-                  },
-                  icon: Icon(
-                    Icons.add_circle,
-                    color: WHITE,
-                    size: icon_size,
+                        fontFamily: 'MadeEvolveSans', fontSize: 50, color: WHITE),
                   ),
                 ),
               ),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 0.0),
+              Align(
+                alignment: Alignment.topCenter,
                 child: Text(
-                  (order_list[data['ime']] == 0 || order_list[data['ime']] == null)
-                      ? " "
-                      : order_list[data['ime']].toString(),
-                  style:
-                      TextStyle(fontFamily: 'MadeEvolveSans', fontSize: 60, color: WHITE),
+                  data['volume'].toString() + "ml",
+                  style: TextStyle(
+                      fontFamily: 'MadeEvolveSans', fontSize: 25, color: WHITE),
+                ),
+              ),
+            ],
+          ),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 15.0, right: 17.0),
+              child: IconButton(
+                
+                onPressed: () {
+                  
+                  setState(() {
+                    if (selectedItems.containsKey(data['ime'])) {
+                      selectedItems.update(data['ime'], (dynamic val) => ++val);
+                    } else {
+                      selectedItems[data['ime']] = 1;
+                    }
+                    print(selectedItems);
+                  });
+                },
+                icon: Icon(
+                  Icons.add_circle,
+                  color: WHITE,
+                  size: iconSize,
                 ),
               ),
             ),
-            Align(
-              alignment: Alignment.bottomLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 15.0, left: 0.0),
-                child: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      if (order_list.containsKey(data['ime'])) {
-                        order_list.update(data['ime'], (dynamic val) => --val);
-                        if (order_list[data['ime']] == 0) {
-                          order_list.remove(data['ime']);
-                        }
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 0.0),
+              child: Text(
+                (selectedItems[data['ime']] == 0 || selectedItems[data['ime']] == null)
+                    ? " "
+                    : selectedItems[data['ime']].toString(),
+                style:
+                    TextStyle(fontFamily: 'MadeEvolveSans', fontSize: 60, color: WHITE),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 15.0, left: 0.0),
+              child: IconButton(
+                onPressed: () {
+                  setState(() {
+                    if (selectedItems.containsKey(data['ime'])) {
+                      selectedItems.update(data['ime'], (dynamic val) => --val);
+                      if (selectedItems[data['ime']] == 0) {
+                        selectedItems.remove(data['ime']);
                       }
-                      print(order_list);
-                    });
-                  },
-                  icon: Icon(
-                    Icons.do_not_disturb_on,
-                    color: WHITE,
-                    size: icon_size,
-                  ),
+                    }
+                    print(selectedItems);
+                  });
+                },
+                icon: Icon(
+                  Icons.do_not_disturb_on,
+                  color: WHITE,
+                  size: iconSize,
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -484,7 +475,7 @@ class _OrderListState extends State<OrderList> {
           color: Colors.transparent,
           height: MediaQuery.of(context).size.height * 0.1,
           child: ListView.builder(
-            itemCount: order_list.length,
+            itemCount: selectedItems.length,
             scrollDirection: Axis.horizontal,
             itemBuilder: (context, index) {
               return Column(
@@ -552,19 +543,19 @@ class _OrderListState extends State<OrderList> {
                               } else {
                                 return ListView.builder(
                                   itemBuilder: (context, int position) {
-                                    var list = order_list.keys.toList();
+                                    var list = selectedItems.keys.toList();
                                     if (list.length == 0) {
                                       return null;
                                     } else {
                                       return new OrderItem(
-                                        order_list: order_list,
+                                        selectedItems: selectedItems,
                                         ime_jogurta: list[position],
                                         iconsMap: iconsMap,
                                         slikeMap: slikeMap,
                                       );
                                     }
                                   },
-                                  itemCount: order_list.length,
+                                  itemCount: selectedItems.length,
                                 );
                               }
                             }),
@@ -579,7 +570,7 @@ class _OrderListState extends State<OrderList> {
                     child: MaterialButton(
                       onPressed: () {
                         setState(() {
-                          order_list.clear();
+                          selectedItems.clear();
                         });
                         showInSnackBar(
                             "Your order has been dispatched. Thanks for ordering.");
@@ -605,6 +596,10 @@ class _OrderListState extends State<OrderList> {
         ),
       );
 
+  void showInSnackBar(String value) {
+       //!Pokaži sporočilo po opravljenem naročilu
+      _scaffoldKey.currentState.showSnackBar(new SnackBar(content: new Text(value)));
+    }
   //!AssetImage assetImage(var n) => AssetImage(slikeMap[n]);   Icon Yogurt
   AssetImage assetImage(var n) => AssetImage("assets/breskev.jpg");
 }
@@ -644,12 +639,8 @@ class SettingsIcon extends StatelessWidget {
 }
 
 class OrdersIcon extends StatelessWidget {
-  const OrdersIcon({
-    Key key,
-    @required this.user,
-  }) : super(key: key);
-
   final FirebaseUser user;
+  const OrdersIcon({ Key key, @required this.user}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -678,22 +669,22 @@ class OrdersIcon extends StatelessWidget {
 }
 
 //!Metoda za printanje trenutnega števila izbranih izdelkov
-String showQuantity(ime_jogurta, Map order_list) {
-  if (order_list.containsKey(ime_jogurta)) {
-    return order_list[ime_jogurta].toString();
+String showQuantity(ime_jogurta, Map selectedItems) {
+  if (selectedItems.containsKey(ime_jogurta)) {
+    return selectedItems[ime_jogurta].toString();
   }
 }
 
 //!Izdelek prikazan na CartScreen-u (Košarici)
 class OrderItem extends StatelessWidget {
-  final Map order_list;
+  final Map selectedItems;
   final String ime_jogurta;
   final Map iconsMap;
   final Map slikeMap;
 
   const OrderItem(
       {Key key,
-      @required this.order_list,
+      @required this.selectedItems,
       @required this.ime_jogurta,
       @required this.iconsMap,
       @required this.slikeMap})
@@ -727,7 +718,7 @@ class OrderItem extends StatelessWidget {
                       style: TextStyle(fontSize: 27),
                     ),
                     Text(
-                      (order_list[ime_jogurta] * 1.4).toStringAsFixed(2) + "€",
+                      (selectedItems[ime_jogurta] * 1.4).toStringAsFixed(2) + "€",
                       style: TextStyle(fontSize: 20),
                     ),
                   ],
@@ -751,7 +742,7 @@ class OrderItem extends StatelessWidget {
                   minWidth: 70,
                   color: THEME_COLOR,
                   child: Text(
-                    "Qty:  " + order_list[ime_jogurta].toString(),
+                    "Qty:  " + selectedItems[ime_jogurta].toString(),
                     style: TextStyle(color: WHITE),
                   ),
                   elevation: 2,

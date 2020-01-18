@@ -11,13 +11,11 @@ class Home extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
     return Scaffold(
-      
       body: Container(
           alignment: Alignment(0.0, -1.0),
           color: THEME_COLOR,
@@ -86,10 +84,8 @@ class Home extends StatelessWidget {
                   padding: new EdgeInsets.only(top: 20),
                 ),
                 MaterialButton(
-                  onPressed: () {
-                    
-                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => Login()));
-                        
+                  onPressed: () {  
+                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => Login()));                       
                   },
                   height: 56,
                   minWidth: MediaQuery.of(context).size.width / 1.2,
@@ -111,15 +107,16 @@ class Home extends StatelessWidget {
   }
 }
 
+
+enum authProblems { UserNotFound, PasswordNotValid, NetworkError, UserAlreadyExists }
+authProblems errorType;
+
 class Login extends StatefulWidget {
   static const String routeName = "/login";
 
   @override
   _LoginState createState() => _LoginState();
 }
-
-enum authProblems { UserNotFound, PasswordNotValid, NetworkError, UserAlreadyExists }
-authProblems errorType;
 
 class _LoginState extends State<Login> {
   bool _validate = false;
@@ -139,7 +136,6 @@ class _LoginState extends State<Login> {
   }
 
   // Initialize Firebase Auth
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -297,7 +293,6 @@ class _LoginState extends State<Login> {
             errorType = authProblems.NetworkError;
             break;
         }
-
         print(errorType);
       }
     } else {

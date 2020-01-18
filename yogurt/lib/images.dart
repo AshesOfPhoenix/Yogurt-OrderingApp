@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class FilterIfAvailable {
-  
   getImages() {
     //!Metoda za filtriranje documents v current_items collection-u
     return Firestore.instance //!vrni firestore instance
@@ -37,7 +36,5 @@ class FilterIfAvailable {
             .child("icons") //!Search icons folder on Firebase Storage
             .child(iconName)   //!Prebrano ime iz baze
             .writeToFile(fileIco); //! Prebran data zapiši v file
-
-    
   }
 }
