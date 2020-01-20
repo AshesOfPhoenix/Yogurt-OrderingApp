@@ -279,7 +279,9 @@ class _LoginState extends State<Login> {
         user = await FirebaseAuth.instance
             .signInWithEmailAndPassword(email: _email, password: _pass);
 
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => OrderList(user)));
+        Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(builder: (context) => OrderList(user)),
+                              (Route<dynamic> route) => false);
       } catch (e) {
         //print(e.message);
         switch (e.message) {

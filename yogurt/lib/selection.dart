@@ -30,7 +30,7 @@ class _OrderListState extends State<OrderList> {
 
   _OrderListState({this.user});
 
-  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+  final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
   PageController controller = PageController();
   PageController itemView = PageController(viewportFraction: 0.95);
   ScrollController sc = ScrollController(initialScrollOffset: 70);
@@ -178,7 +178,7 @@ class _OrderListState extends State<OrderList> {
 
     //!BUILDS MAIN SELECTION SCREEN
     return Scaffold(
-      key: _scaffoldKey,
+      key: scaffoldKey,
       backgroundColor: WHITE,
       body: PageView(
         //*PageView za prehajanje iz seznama izdelkov v košarico
@@ -269,25 +269,27 @@ class _OrderListState extends State<OrderList> {
                     ),
                   );
                 } else {
-                  return PageView.builder(
-                    onPageChanged: (num) {
-                      print("Current index: " + num.toString());
-                    },
-                    controller: itemView, //!Pass PageView controller
-                    scrollDirection: Axis.horizontal,
-                    itemCount: slideList.length, //!Število elementov je dolžina lista
-                    itemBuilder: (context, int currentIndex) {
-                      //!Build current facing item
-                      bool active = (currentIndex == current_page);
-                      //print(active.toString());
-                      print("Trenutni index: " +
-                          currentIndex.toString() +
-                          " Trenutna stran: " +
-                          current_page.toString());
-                      //?(Lastnosti izdelka kot Map, bool trenutno aktiven, trenutni facing element)
-                      return buildProductListPage(
-                          slideList[currentIndex], active, currentIndex);
-                    },
+                  return Container(
+                    child: PageView.builder(
+                      onPageChanged: (num) {
+                        print("Current index: " + num.toString());
+                      },
+                      controller: itemView, //!Pass PageView controller
+                      scrollDirection: Axis.horizontal,
+                      itemCount: slideList.length, //!Število elementov je dolžina lista
+                      itemBuilder: (context, int currentIndex) {
+                        //!Build current facing item
+                        bool active = (currentIndex == current_page);
+                        //print(active.toString());
+                        print("Trenutni index: " +
+                            currentIndex.toString() +
+                            " Trenutna stran: " +
+                            current_page.toString());
+                        //?(Lastnosti izdelka kot Map, bool trenutno aktiven, trenutni facing element)
+                        return buildProductListPage(
+                            slideList[currentIndex], active, currentIndex);
+                      },
+                    ),
                   );
                 }
               },
@@ -572,7 +574,7 @@ class _OrderListState extends State<OrderList> {
 
   void showInSnackBar(String value) {
     //!Pokaži sporočilo po opravljenem naročilu
-    _scaffoldKey.currentState.showSnackBar(new SnackBar(content: new Text(value)));
+    scaffoldKey.currentState.showSnackBar(new SnackBar(content: new Text(value)));
   }
 
   //!AssetImage assetImage(var n) => AssetImage(slikeMap[n]);   Icon Yogurt
