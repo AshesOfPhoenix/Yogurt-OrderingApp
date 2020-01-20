@@ -30,7 +30,7 @@ class _OrderListState extends State<OrderList> {
 
   _OrderListState({this.user});
 
-  final GlobalKey<ScaffoldState> scaffoldKey = new GlobalKey<ScaffoldState>();
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
   PageController controller = PageController();
   PageController itemView = PageController(viewportFraction: 0.95);
   ScrollController sc = ScrollController(initialScrollOffset: 70);
@@ -178,7 +178,7 @@ class _OrderListState extends State<OrderList> {
 
     //!BUILDS MAIN SELECTION SCREEN
     return Scaffold(
-      key: scaffoldKey,
+      key: _scaffoldKey,
       backgroundColor: WHITE,
       body: PageView(
         //*PageView za prehajanje iz seznama izdelkov v košarico
@@ -269,27 +269,25 @@ class _OrderListState extends State<OrderList> {
                     ),
                   );
                 } else {
-                  return Container(
-                    child: PageView.builder(
-                      onPageChanged: (num) {
-                        print("Current index: " + num.toString());
-                      },
-                      controller: itemView, //!Pass PageView controller
-                      scrollDirection: Axis.horizontal,
-                      itemCount: slideList.length, //!Število elementov je dolžina lista
-                      itemBuilder: (context, int currentIndex) {
-                        //!Build current facing item
-                        bool active = (currentIndex == current_page);
-                        //print(active.toString());
-                        print("Trenutni index: " +
-                            currentIndex.toString() +
-                            " Trenutna stran: " +
-                            current_page.toString());
-                        //?(Lastnosti izdelka kot Map, bool trenutno aktiven, trenutni facing element)
-                        return buildProductListPage(
-                            slideList[currentIndex], active, currentIndex);
-                      },
-                    ),
+                  return PageView.builder(
+                    onPageChanged: (num) {
+                      print("Current index: " + num.toString());
+                    },
+                    controller: itemView, //!Pass PageView controller
+                    scrollDirection: Axis.horizontal,
+                    itemCount: slideList.length, //!Število elementov je dolžina lista
+                    itemBuilder: (context, int currentIndex) {
+                      //!Build current facing item
+                      bool active = (currentIndex == current_page);
+                      //print(active.toString());
+                      print("Trenutni index: " +
+                          currentIndex.toString() +
+                          " Trenutna stran: " +
+                          current_page.toString());
+                      //?(Lastnosti izdelka kot Map, bool trenutno aktiven, trenutni facing element)
+                      return buildProductListPage(
+                          slideList[currentIndex], active, currentIndex);
+                    },
                   );
                 }
               },
@@ -345,110 +343,108 @@ class _OrderListState extends State<OrderList> {
     final String ime = data['file_name'];
     final String path = "${dir.path}/$ime";
     print(path);
-    return Expanded(
-      child: AnimatedContainer(
-        width: MediaQuery.of(context).size.width * 0.5,
-        duration: Duration(milliseconds: 1200),
-        curve: Curves.easeOutQuint,
-        margin: EdgeInsets.only(top: top, bottom: 10, right: 15, left: 15),
-        decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20.0),
-            image: DecorationImage(
-                fit: BoxFit.cover, image: CachedNetworkImageProvider(data['slika'])),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.7),
-                offset: new Offset(offset / 2, offset),
-                blurRadius: blur,
-              )
-            ]),
-        child: Stack(
-          children: <Widget>[
-            Column(
-              children: <Widget>[
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 15.0),
-                    child: Text(
-                      data['ime'],
-                      style: TextStyle(
-                          fontFamily: 'MadeEvolveSans', fontSize: 50, color: WHITE),
-                    ),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.topCenter,
+    return AnimatedContainer(
+      width: MediaQuery.of(context).size.width * 0.5,
+      duration: Duration(milliseconds: 1200),
+      curve: Curves.easeOutQuint,
+      margin: EdgeInsets.only(top: top, bottom: 10, right: 15, left: 15),
+      decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20.0),
+          image: DecorationImage(
+              fit: BoxFit.cover, image: AssetImage(slikeMap[index])),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.7),
+              offset: new Offset(offset / 2, offset),
+              blurRadius: blur,
+            )
+          ]),
+      child: Stack(
+        children: <Widget>[
+          Column(
+            children: <Widget>[
+              Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 15.0),
                   child: Text(
-                    data['volume'].toString() + "ml",
+                    data['ime'],
                     style: TextStyle(
-                        fontFamily: 'MadeEvolveSans', fontSize: 25, color: WHITE),
-                  ),
-                ),
-              ],
-            ),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 15.0, right: 17.0),
-                child: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      if (selectedItems.containsKey(data['ime'])) {
-                        selectedItems.update(data['ime'], (dynamic val) => ++val);
-                      } else {
-                        selectedItems[data['ime']] = 1;
-                      }
-                      print(selectedItems);
-                    });
-                  },
-                  icon: Icon(
-                    Icons.add_circle,
-                    color: WHITE,
-                    size: iconSize,
+                        fontFamily: 'MadeEvolveSans', fontSize: 50, color: WHITE),
                   ),
                 ),
               ),
-            ),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 0.0),
+              Align(
+                alignment: Alignment.topCenter,
                 child: Text(
-                  (selectedItems[data['ime']] == 0 || selectedItems[data['ime']] == null)
-                      ? " "
-                      : selectedItems[data['ime']].toString(),
-                  style:
-                      TextStyle(fontFamily: 'MadeEvolveSans', fontSize: 60, color: WHITE),
+                  data['volume'].toString() + "ml",
+                  style: TextStyle(
+                      fontFamily: 'MadeEvolveSans', fontSize: 25, color: WHITE),
+                ),
+              ),
+            ],
+          ),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 15.0, right: 17.0),
+              child: IconButton(
+                onPressed: () {
+                  setState(() {
+                    if (selectedItems.containsKey(data['ime'])) {
+                      selectedItems.update(data['ime'], (dynamic val) => ++val);
+                    } else {
+                      selectedItems[data['ime']] = 1;
+                    }
+                    print(selectedItems);
+                  });
+                },
+                icon: Icon(
+                  Icons.add_circle,
+                  color: WHITE,
+                  size: iconSize,
                 ),
               ),
             ),
-            Align(
-              alignment: Alignment.bottomLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 15.0, left: 0.0),
-                child: IconButton(
-                  onPressed: () {
-                    setState(() {
-                      if (selectedItems.containsKey(data['ime'])) {
-                        selectedItems.update(data['ime'], (dynamic val) => --val);
-                        if (selectedItems[data['ime']] == 0) {
-                          selectedItems.remove(data['ime']);
-                        }
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 0.0),
+              child: Text(
+                (selectedItems[data['ime']] == 0 || selectedItems[data['ime']] == null)
+                    ? " "
+                    : selectedItems[data['ime']].toString(),
+                style:
+                    TextStyle(fontFamily: 'MadeEvolveSans', fontSize: 60, color: WHITE),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 15.0, left: 0.0),
+              child: IconButton(
+                onPressed: () {
+                  setState(() {
+                    if (selectedItems.containsKey(data['ime'])) {
+                      selectedItems.update(data['ime'], (dynamic val) => --val);
+                      if (selectedItems[data['ime']] == 0) {
+                        selectedItems.remove(data['ime']);
                       }
-                      print(selectedItems);
-                    });
-                  },
-                  icon: Icon(
-                    Icons.do_not_disturb_on,
-                    color: WHITE,
-                    size: iconSize,
-                  ),
+                    }
+                    print(selectedItems);
+                  });
+                },
+                icon: Icon(
+                  Icons.do_not_disturb_on,
+                  color: WHITE,
+                  size: iconSize,
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -574,7 +570,7 @@ class _OrderListState extends State<OrderList> {
 
   void showInSnackBar(String value) {
     //!Pokaži sporočilo po opravljenem naročilu
-    scaffoldKey.currentState.showSnackBar(new SnackBar(content: new Text(value)));
+    _scaffoldKey.currentState.showSnackBar(new SnackBar(content: new Text(value)));
   }
 
   //!AssetImage assetImage(var n) => AssetImage(slikeMap[n]);   Icon Yogurt
