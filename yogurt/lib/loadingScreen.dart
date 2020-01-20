@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:yogurt/authentication.dart';
 import 'Colors.dart';
@@ -20,6 +21,13 @@ class SplashScreen extends StatefulWidget {
 class SplashScreenState extends State<SplashScreen> {
   //!final Firestore instance = Firestore.instance;
   Map<String, String> fileNames = <String, String>{};
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  
+
+  Stream<FirebaseUser> get user{
+    return _auth.onAuthStateChanged;
+  }
 
   @override
   void initState() {
@@ -37,6 +45,7 @@ class SplashScreenState extends State<SplashScreen> {
         for (var i = 0; i < docs.documents.length; i++) {
           //!l!oopa skozi izdelke
           var item = docs.documents[i].data; //!dodeli izdelek v variable
+          fileNames[item['ime']] = item['file_name'];
           await FilterIfAvailable().cacheFile(docs, tempDir, item); //! Prebran data zapiši v file
         }
       }

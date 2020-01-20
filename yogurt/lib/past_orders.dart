@@ -23,19 +23,98 @@ class _OrdersState extends State<Orders> {
     return Scaffold(
       body: Container(
         color: WHITE,
-        child: Stack(
-          children: <Widget>[
-            Align(
-              alignment: Alignment.topCenter,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 24.0),
-                child: Text(
-                  "Orders",
-                  style: TextStyle(fontSize: 40, fontFamily: 'MadeEvolveSans'),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.max,
+            children: <Widget>[
+              Align(
+                alignment: Alignment.topCenter,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 24.0),
+                  child: Text(
+                    "Orders",
+                    style: TextStyle(fontSize: 40, fontFamily: 'MadeEvolveSans'),
+                  ),
                 ),
               ),
-            ),
-          ],
+              Container(
+                height: 500,
+                child: ListView(
+                  scrollDirection: Axis.vertical,
+                  children: <Widget>[
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 25.0),
+                        child: Text(
+                          "Pending order",
+                          style: TextStyle(
+                              color: THEME_COLOR,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 15.0, left: 15, right: 15),
+                      child: Container(
+                        decoration: new BoxDecoration(
+                            boxShadow: [
+                              new BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                offset: new Offset(1.0, 2.0),
+                                blurRadius: 5.0,
+                              )
+                            ],
+                            color: WHITE,
+                            borderRadius: new BorderRadius.all(Radius.circular(12))),
+                        height: 110,
+                        width: 100,
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 15, left: 15, right: 15),
+                        ),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 25.0, top: 8.0),
+                        child: Text(
+                          "Completed orders",
+                          style: TextStyle(
+                              color: THEME_COLOR,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 15.0, left: 15, right: 15),
+                      child: Container(
+                        decoration: new BoxDecoration(
+                            boxShadow: [
+                              new BoxShadow(
+                                color: Colors.black.withOpacity(0.2),
+                                offset: new Offset(1.0, 2.0),
+                                blurRadius: 5.0,
+                              )
+                            ],
+                            color: WHITE,
+                            borderRadius: new BorderRadius.all(Radius.circular(12))),
+                        height: 110,
+                        width: 100,
+                        child: Padding(
+                          padding: EdgeInsets.only(top: 15, left: 15, right: 15),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );
